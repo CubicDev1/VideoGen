@@ -1,0 +1,115 @@
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  name         String?
+  passwordHash String?
+  credits      Int      @default(100)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  sessions      Session[]
+  accounts      Account[]
+  projects      Project[]
+  payments      Payment[]
+  emailVerified Boolean   @default(false)
+  image         String?
+
+  @@map("user")
+}
+
+model Session {
+  id        String   @id @default(uuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+
+  @@index([userId])
+  @@map("session")
+}
+
+model Account {
+  id                String @id @default(uuid())
+  userId            String
+  user              User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  accountId             String
+  providerId            String
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@unique([providerId, accountId])
+  @@index([userId])
+  @@map("account")
+}
+
+model Project {
+  id          String   @id @default(uuid())
+  userId      String
+  prompt      String
+  duration    String   @default("10s")
+  aspectRatio String   @default("16:9")
+  status      String   @default("pending") // pending, generating, completed, failed
+  createdAt   DateTime @default(now())
+
+  user   User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  videos GeneratedVideo[]
+}
+
+model GeneratedVideo {
+  id              String   @id @default(uuid())
+  projectId       String
+  compositionCode String?
+  themeConfig     String?
+  videoUrl        String?
+  status          String   @default("generated")
+  createdAt       DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model Payment {
+  id                String   @id @default(uuid())
+  userId            String
+  razorpayOrderId   String?  @unique
+  razorpayPaymentId String?  @unique
+  amount            Int
+  status            String   @default("pending") // pending, paid, failed
+  createdAt         DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("verification")
+}

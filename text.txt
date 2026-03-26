@@ -1,0 +1,53 @@
+I want to build Landing Hero Section for my AI Graphic Video generator App. 
+
+So Add a header with logo on left and app name is 'VidMotionAI' then Options
+
+ in center 'Home, Pricing, Contact Us' then User profile icon on right if 
+
+user login else show Get Started button. In hero section I want to add 
+
+Heading , Subtitle and Input Prompt Textarea similar to shadcn input group 
+
+text area along with dropdown option in that for video duratio and andd 
+
+option like 5s, 10sc, 15sec, 20 sec , and Tab for selecting screen ratio 
+
+between 16:9 and 9:16, and on right senf button. Below Show Other User 
+
+Created project if exisitng user not login else show user creatd project 
+
+video. Lets also Create Colors theme for our complete App. So save in one 
+
+.md file to everytime we can use colortheme and rules for UIUX design. Give 
+me High Quality UIUX design for this app
+
+
+
+Implement prisma database for our app. make sure you will use prima DB for all application data.
+
+Create schema with these models:
+User: id, email, name, passwordHash, credits (default 100), createdAt, updatedAt
+Session: id, userId, token, expiresAt, createdAt
+Account: id, userId, provider, providerAccountId (for social login)
+Project: id, userId, prompt, duration, aspectRatio, status, createdAt
+GeneratedVideo: id, projectId, compositionCode, themeConfig, videoUrl, status, createdAt
+Payment: id, userId, razorpayOrderId, razorpayPaymentId, amount, status, createdAt
+
+
+Implement Better Auth for authentication in our Next.js app.
+Use the Prisma adapter with our existing Prisma schema.
+
+Setup:
+- Email and password sign up / sign in
+- Google social login {commming soon}
+- GitHub social login {comming soon}
+- Session management using the Session model in Prisma
+- Create auth.ts config file at the project root
+- Create app/api/auth/[...all]/route.ts handler
+- Create AuthProvider component that wraps the app in layout.tsx
+- After first sign-in/sign-up, check if user already exists in DB.
+  If new: create user record with 100 default credits.
+  If existing: just continue the session.
+- Create useSession hook for client components
+- Protect routes: redirect to /sign-in if user is not authenticated
+- Refer ui-theme-rules.md for sign-in and sign-up page design.

@@ -9,6 +9,8 @@ import {
   Sparkles,
   ChevronDown,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { createProjectAction } from "@/app/actions/project";
 
 // ── Types ──
 type Duration = "5s" | "10s" | "15s" | "20s";
@@ -27,11 +29,27 @@ export function PromptBox() {
   const [ratio, setRatio] = useState<Ratio>("16:9");
   const [durationOpen, setDurationOpen] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const router = useRouter();
 
-  const handleGenerate = () => {
+  const handleGenerate = async () => {
     if (!prompt.trim()) return;
+    
     setIsGenerating(true);
-    setTimeout(() => setIsGenerating(false), 2500);
+    try {
+      const projectId = await createProjectAction({
+        prompt: prompt.slice(0, 2000),
+        duration,
+        aspectRatio: ratio,
+      });
+      router.push(`/project/${projectId}`);
+    } catch (e: any) {
+      if (e.message?.includes("unauthorized")) {
+        router.push("/sign-in");
+      } else {
+        alert("Failed to create project");
+      }
+      setIsGenerating(false);
+    }
   };
 
   return (
@@ -96,6 +114,7 @@ export function PromptBox() {
               color: "var(--vm-text-primary)",
               caretColor: "var(--vm-accent)",
             }}
+            maxLength={2000}
           />
         </div>
 
@@ -313,7 +332,7 @@ export function PromptBox() {
                 fontFamily: "DM Sans, sans-serif",
               }}
             >
-              {prompt.length} chars · Ctrl+Enter to send
+              {prompt.length}/2000 chars · Ctrl+Enter to send
             </span>
           )}
 

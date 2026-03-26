@@ -2,11 +2,8 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { Zap, User, Menu, X, ChevronRight } from "lucide-react";
-
-// ── Mock auth state (replace with real auth) ──
-const MOCK_IS_LOGGED_IN = false;
-const MOCK_USER = { name: "Alex Rivera", initials: "AR" };
+import { Zap, Menu, X, User as UserIcon } from "lucide-react";
+import { useSession, signOut } from "@/lib/auth-client";
 
 const navLinks = [
   { label: "Home", href: "/" },
@@ -16,8 +13,11 @@ const navLinks = [
 
 export function Header() {
   const [scrolled, setScrolled] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const isLoggedIn = MOCK_IS_LOGGED_IN;
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  
+  // Real auth state from Better Auth
+  const { data: session } = useSession();
+  const isLoggedIn = !!session;
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12);
@@ -133,10 +133,14 @@ export function Header() {
             }}
           >
             {isLoggedIn ? (
-              /* User Avatar */
+              /* User Avatar/Logout */
               <button
                 id="header-user-avatar"
-                aria-label="User profile"
+                aria-label="Sign out"
+                onClick={async () => {
+                  await signOut();
+                  window.location.href = "/";
+                }}
                 style={{
                   width: 36,
                   height: 36,
@@ -154,25 +158,14 @@ export function Header() {
                   transition: "border-color 0.2s ease, box-shadow 0.2s ease",
                   outline: "none",
                 }}
-                onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLElement).style.borderColor =
-                    "var(--vm-accent)";
-                  (e.currentTarget as HTMLElement).style.boxShadow =
-                    "var(--vm-glow-accent)";
-                }}
-                onMouseLeave={(e) => {
-                  (e.currentTarget as HTMLElement).style.borderColor =
-                    "var(--vm-border-active)";
-                  (e.currentTarget as HTMLElement).style.boxShadow = "none";
-                }}
+                title="Sign out"
               >
-                {MOCK_USER.initials}
+                {session?.user?.name ? session.user.name.slice(0, 2).toUpperCase() : <UserIcon size={16} />}
               </button>
             ) : (
-              /* Get Started Button */
-              <Link
-                href="/signup"
-                id="header-get-started"
+              <button
+                onClick={() => (window.location.href = "/sign-up")}
+                className="vm-btn-cta"
                 style={{
                   display: "inline-flex",
                   alignItems: "center",
@@ -185,34 +178,24 @@ export function Header() {
                   fontFamily: "DM Sans, sans-serif",
                   fontWeight: 600,
                   fontSize: 14,
+                  border: "none",
+                  cursor: "pointer",
                   textDecoration: "none",
                   flexShrink: 0,
                   transition: "box-shadow 0.25s ease, transform 0.2s ease",
                   boxShadow: "0 2px 12px rgba(79,119,255,0.3)",
                 }}
-                onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLElement).style.boxShadow =
-                    "var(--vm-glow-accent)";
-                  (e.currentTarget as HTMLElement).style.transform =
-                    "scale(1.03)";
-                }}
-                onMouseLeave={(e) => {
-                  (e.currentTarget as HTMLElement).style.boxShadow =
-                    "0 2px 12px rgba(79,119,255,0.3)";
-                  (e.currentTarget as HTMLElement).style.transform = "scale(1)";
-                }}
               >
                 Get Started
-                <ChevronRight size={14} strokeWidth={2.5} />
-              </Link>
+              </button>
             )}
 
             {/* Mobile menu toggle */}
             <button
               id="header-mobile-menu"
-              aria-label={mobileOpen ? "Close menu" : "Open menu"}
-              aria-expanded={mobileOpen}
-              onClick={() => setMobileOpen((v) => !v)}
+              aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
+              aria-expanded={isMobileMenuOpen}
+              onClick={() => setIsMobileMenuOpen((v) => !v)}
               className="vm-mobile-menu-btn"
               style={{
                 display: "none",
@@ -228,14 +211,14 @@ export function Header() {
                 transition: "border-color 0.2s ease, color 0.2s ease",
               }}
             >
-              {mobileOpen ? <X size={18} /> : <Menu size={18} />}
+              {isMobileMenuOpen ? <X size={18} /> : <Menu size={18} />}
             </button>
           </div>
         </div>
       </header>
 
       {/* ── Mobile Nav Drawer ── */}
-      {mobileOpen && (
+      {isMobileMenuOpen && (
         <div
           className="vm-mobile-nav"
           style={{
@@ -258,7 +241,7 @@ export function Header() {
             <a
               key={link.href}
               href={link.href}
-              onClick={() => setMobileOpen(false)}
+              onClick={() => setIsMobileMenuOpen(false)}
               style={{
                 display: "block",
                 padding: "12px 16px",
