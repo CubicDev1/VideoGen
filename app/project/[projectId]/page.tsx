@@ -39,5 +39,5 @@ export default async function ProjectPage({
     );
   }
 
-  return <ProjectWorkspace project={project} />
+  return <ProjectWorkspace project={project} />;
 }

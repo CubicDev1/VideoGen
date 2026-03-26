@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { ArrowLeft, MessageSquare, LayoutTemplate, Send, Sparkles, CheckCircle2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { createProjectAction } from "@/app/actions/project";
+import { RemotionDynamicPlayer } from "./remotion-dynamic-player";
 
 export function ProjectWorkspace({ project }: { project: any }) {
   const router = useRouter();
@@ -22,6 +23,7 @@ export function ProjectWorkspace({ project }: { project: any }) {
   };
 
   const [progressStep, setProgressStep] = useState(getInitialStep(project.status));
+  const [generatedData, setGeneratedData] = useState<any>(null);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -36,20 +38,30 @@ export function ProjectWorkspace({ project }: { project: any }) {
             if (newStep > progressStep) {
               setProgressStep(newStep);
             }
+            if (data.videos && data.videos.length > 0) {
+              setGeneratedData(data.videos[0]);
+            }
           }
         } catch (error) {
           console.error("Polling error", error);
         }
       }, 3500); // Poll every 3.5 seconds
+    } else {
+        // Fallback fetch if it was already immediately completed on page load
+        if (!generatedData) {
+            fetch(`/api/project/${project.id}`).then(res => res.json()).then(data => {
+                if (data.videos?.length > 0) setGeneratedData(data.videos[0]);
+            }).catch(() => {});
+        }
     }
 
     return () => clearInterval(interval);
-  }, [project.id, progressStep]);
+  }, [project.id, progressStep, generatedData]);
 
   const steps = [
     { label: "Analyzing Prompt" },
-    { label: "Generating Scenes" },
-    { label: "Synthesizing Audio" },
+    { label: "Composing Narrative" },
+    { label: "Generating React Code" },
     { label: "Finalizing Video" }
   ];
 
@@ -291,23 +303,21 @@ export function ProjectWorkspace({ project }: { project: any }) {
                 </div>
               ) : (
                 <div className="w-full h-full flex flex-col items-center justify-center p-4 z-10">
-                   {/* Video Player Mock */}
-                   <div className="w-full h-full max-h-[500px] aspect-video bg-[#0a0a0b] rounded-2xl overflow-hidden relative shadow-[0_20px_60px_rgba(0,0,0,0.1)] group border-[#1e293b] border-4">
-                      {/* Gradient abstract background representing a generated video */}
-                      <div className="absolute inset-0 bg-gradient-to-tr from-[#2e1065] via-black to-[#3b0764] opacity-90 mix-blend-screen" />
-                      
-                      {/* Play Button */}
-                      <div className="absolute inset-0 flex items-center justify-center group-hover:bg-black/10 transition-all duration-500">
-                        <button className="w-20 h-20 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20 hover:scale-110 hover:bg-white/20 transition-all shadow-[0_0_40px_rgba(168,85,247,0.4)]">
-                           <div className="ml-2 w-0 h-0 border-y-[12px] border-y-transparent border-l-[22px] border-l-white" />
-                        </button>
-                      </div>
-
-                      {/* Video Progress Bar Fake */}
-                      <div className="absolute bottom-4 left-4 right-4 h-1.5 bg-white/20 rounded-full overflow-hidden">
-                         <div className="h-full w-1/3 bg-[#a855f7] rounded-full" />
-                      </div>
-                   </div>
+                   {generatedData ? (
+                     <div className="w-full h-full flex flex-col items-center justify-center border-4 border-[#1e293b] rounded-[24px] overflow-hidden bg-black relative shadow-[0_20px_60px_rgba(0,0,0,0.15)] group">
+                        <RemotionDynamicPlayer 
+                          compositionCode={generatedData.compositionCode} 
+                          themeConfig={JSON.parse(generatedData.themeConfig || "{}")} 
+                          aspectRatio={project.aspectRatio}
+                          durationFrames={parseInt(project.duration.replace("s", "")) * 30}
+                        />
+                     </div>
+                   ) : (
+                     <div className="flex animate-pulse items-center gap-2 text-[#64748b] font-medium">
+                        <div className="w-4 h-4 rounded-full bg-[#9333ea] animate-bounce" />
+                        Fetching Generated Composition...
+                     </div>
+                   )}
                 </div>
               )}
 
